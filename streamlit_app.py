@@ -101,6 +101,9 @@ df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True)
 df['Day_of_Week'] = df['Timestamp'].dt.day_name()
 
 with st.expander('Failure Rate Per Day'):
+
+  st.write("Sunday has a slightly higher rate of failure.")
+  
   # Calculate failure rate per day
   # Mapping -1 to 0 and 1 to 1 makes calculating the 'mean' the same as 'failure rate'
   df['is_fail'] = df['Label'].map({-1: 0, 1: 1})
@@ -114,6 +117,7 @@ with st.expander('Failure Rate Per Day'):
   plt.ylabel('Failure Rate (%)')
   plt.xlabel('Day')
   st.pyplot(plt)
+
 
 with st.expander('Days vs. Hours - Probability of Failure'):
 
@@ -157,9 +161,49 @@ with st.expander('Rolling Failure Rate - Peaks of Failure Over Time'):
   
   st.pyplot(plt)
 
+#################
+# MORE FEATURES #
+#################
+st.write("### Anomaly Detection:")
 
+# Setup Time Filters
+df['Day'] = df['Timestamp'].dt.day_name()
+df['Hour'] = df['Timestamp'].dt.hour
+
+# Define our "Spike" criteria: Wed/Sat at 8 AM
+is_spike = ((df['Day'] == 'Wednesday') | (df['Day'] == 'Saturday')) & (df['Hour'] == 8)
+
+# Split the data into "Spike Group" and "Normal Group"
+# We only look at features (excluding Timestamp, Label, and Time info)
+features_only = [col for col in df.columns if 'Feature_' in col and '_is_missing' not in col]
+
+spike_group = df[is_spike][features_only]
+normal_group = df[~is_spike][features_only]
+
+# Calculate the "Z-Score" or Deviation
+# We want to see which features moved the most relative to their normal standard deviation
+spike_means = spike_group.mean()
+normal_means = normal_group.mean()
+normal_std = normal_group.std()
+
+# Calculate the 'Signal Shift'
+# Formula: (Mean during Spike - Mean during Normal) / Standard Deviation
+# This tells us how many "standard deviations" the sensor moved
+shifts = (spike_means - normal_means) / normal_std
+
+# Get the Top 5 most "deviant" sensors (absolute value)
+top_5_sensors = shifts.abs().sort_values(ascending=False).head(5)
+
+st.write("--- Top 5 Sensors Experiencing Anomalies during Wed/Sat 8 AM Spikes ---")
+for sensor, shift_val in top_5_sensors.items():
+    direction = "HIGHER" if shifts[sensor] > 0 else "LOWER"
+    st.write(f"{sensor}: Shifted {abs(shift_val):.2f} standard deviations {direction} than normal.")
   
+#################
+# MORE FEATURES #
+#################
 
+st.write("### Other Features:")
 
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
