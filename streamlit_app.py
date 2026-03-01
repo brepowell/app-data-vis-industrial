@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 st.title('⚡SECOM Industrial Dataset Visualization')
 
@@ -74,7 +76,22 @@ df = df.drop(columns=high_missing_cols)
 
 st.write(f"Created {len(high_signal_cols)} indicator columns and dropped {len(high_missing_cols)} original features.")
 
+# Filter the dataframe for the Label and new indicator columns
+indicator_cols = [col for col in df.columns if '_is_missing' in col]
+plot_data = df[['Label'] + indicator_cols]
 
+# Calculate the Correlation Matrix
+corr_matrix = plot_data.corr()
+
+# Plotting
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix[['Label']].sort_values(by='Label', ascending=False), 
+            annot=True, 
+            cmap='coolwarm', 
+            center=0)
+
+plt.title("Correlation: Missingness Indicators vs. Label")
+st.pyplot(plt)
 
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
