@@ -57,6 +57,7 @@ comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - compariso
 comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
 
 with st.expander('Missingness across Passes and Fails'):
+  st.write("There are 28 features that have over 50% missing values. Of those, some features, like 'Feature_72' and 'Feature_73', have a larger difference between passes and fails. That could be significant.
   comparison_df
 
 # Automatically identify "High Signal" columns (Difference > 5%)
@@ -69,25 +70,26 @@ for col in high_signal_cols:
 # Drop ALL columns with > 50% missingness
 df = df.drop(columns=high_missing_cols)
 
-st.write(f"Created {len(high_signal_cols)} indicator columns and dropped {len(high_missing_cols)} original features.")
-
-# Filter the dataframe for the Label and new indicator columns
-indicator_cols = [col for col in df.columns if '_is_missing' in col]
-plot_data = df[['Label'] + indicator_cols]
-
-# Calculate the Correlation Matrix
-corr_matrix = plot_data.corr()
-
-# Plotting
-st.write("There does not seem to be a strong linear correlation between missingness and the label of Pass vs. Fail. There might be a nonlinear relationship not yet explored. ")
-plt.figure(figsize=(10, 8))
-sns.heatmap(corr_matrix[['Label']].sort_values(by='Label', ascending=False), 
-            annot=True, 
-            cmap='coolwarm', 
-            center=0)
-
-plt.title("Correlation: Missingness Indicators vs. Label")
-st.pyplot(plt)
+with st.expander('Missingness Indicator Columns'):
+  st.write(f"Created {len(high_signal_cols)} indicator columns and dropped {len(high_missing_cols)} original features.")
+  
+  # Filter the dataframe for the Label and new indicator columns
+  indicator_cols = [col for col in df.columns if '_is_missing' in col]
+  plot_data = df[['Label'] + indicator_cols]
+  
+  # Calculate the Correlation Matrix
+  corr_matrix = plot_data.corr()
+  
+  # Plotting
+  st.write("There does not seem to be a strong linear correlation between missingness and the label of Pass vs. Fail. There might be a nonlinear relationship not yet explored. ")
+  plt.figure(figsize=(10, 8))
+  sns.heatmap(corr_matrix[['Label']].sort_values(by='Label', ascending=False), 
+              annot=True, 
+              cmap='coolwarm', 
+              center=0)
+  
+  plt.title("Correlation: Missingness Indicators vs. Label")
+  st.pyplot(plt)
 
 ###############
 # TIME SERIES #
