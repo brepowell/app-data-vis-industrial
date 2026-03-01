@@ -43,11 +43,12 @@ st.write("### Data Missingness Report:")
 st.write("Data that is missing from pass or fail states might be important features, so I do not want to delete them before exploring to see if they are important.")
 st.write("In the table below, I look at the percent of missing values in the Passes vs. the Fails to see whether or not the features are important to judging the fails.")
 st.write("Low Difference_% means the data is safe to drop because the data is missing across both Passes and Fails.")
-st.write("High Difference_% means the data may be important")
+st.write("High Difference_% means the data may be important.")
 
-# 1. Calculate missingness globally and filter columns
+# 1. Calculate missingness globally
 missing_pct = df.isnull().mean() * 100
 high_missing_cols = missing_pct[missing_pct > 50].index
+st.write(f"- Number of features with >50% missing values: {len(high_missing_cols)}")
 
 # 2. Group by Label and calculate missingness for those specific columns
 # Take the mean of the null check to get the percentage
@@ -60,8 +61,6 @@ comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - compariso
 # 4. Sort and display
 comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
 comparison_df
-
-st.write(f"- Number of features with >50% missing values: {len(high_missing_cols)}")
 
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
