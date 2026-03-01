@@ -1,5 +1,5 @@
 import streamlit as st
 
-st.title('🎈 App Name')
+st.title('⚡SECOM Industrial Dataset Visualization')
 
 st.write('Hello world!')
