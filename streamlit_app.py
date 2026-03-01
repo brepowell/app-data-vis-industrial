@@ -54,7 +54,7 @@ comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
 comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
 
 # 4. Sort and display
-comparison_df = comparison_df.sort_values(by='Difference', ascending=False).round(2)
+comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
 comparison_df
 
 st.write(f"- Number of features with >50% missing values: {len(high_missing_cols)}")
