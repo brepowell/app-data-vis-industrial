@@ -41,6 +41,10 @@ df_clean = df.drop(columns=constant_cols)
 ###############
 st.write("### Data Missingness Report:")
 st.write("Data that is missing from pass or fail states might be important features, so I do not want to delete them before exploring to see if they are important.")
+st.write("In the table below, I look at the percent of missing values in the Passes vs. the Fails to see whether or not the features are important to judging the fails.")
+st.write("Low Difference_% means the data is safe to drop because the data is missing across both Passes and Fails.")
+st.write("High Difference_% means the data may be important")
+
 # 1. Calculate missingness globally and filter columns
 missing_pct = df.isnull().mean() * 100
 high_missing_cols = missing_pct[missing_pct > 50].index
