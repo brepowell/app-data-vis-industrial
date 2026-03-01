@@ -8,4 +8,4 @@ st.write('This app allows you to explore the SECOM dataset')
 df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
 df
 
-df.info
+df.info()
