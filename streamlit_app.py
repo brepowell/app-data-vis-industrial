@@ -45,22 +45,36 @@ st.write("In the table below, I look at the percent of missing values in the Pas
 st.write("Low Difference_% means the data is safe to drop because the data is missing across both Passes and Fails.")
 st.write("High Difference_% means the data may be important.")
 
-# 1. Calculate missingness globally
+# Calculate missingness globally and group by label
 missing_pct = df.isnull().mean() * 100
 high_missing_cols = missing_pct[missing_pct > 50].index
 st.write(f"- Number of features with >50% missing values: {len(high_missing_cols)}")
 
-# 2. Group by Label and calculate missingness for those specific columns
+# Group by Label and calculate missingness for those specific columns
 # Take the mean of the null check to get the percentage
 comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
 
-# 3. Rename columns and calculate the difference
+# Rename columns and calculate the difference
 comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
 comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
 
-# 4. Sort and display
+# Sort and display
 comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
 comparison_df
+
+# Automatically identify "High Signal" columns (Difference > 5%)
+high_signal_cols = comparison_df[comparison_df['Difference_%'] > 5].index
+
+# Create new indicator columns and then drop original high-missing columns
+for col in high_signal_cols:
+    df[f'{col}_is_missing'] = df[col].isnull().astype(int)
+
+# Drop ALL columns with > 50% missingness
+df = df.drop(columns=high_missing_cols)
+
+st.write(f"Created {len(high_signal_cols)} indicator columns and dropped {len(high_missing_cols)} original features.")
+
+
 
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
