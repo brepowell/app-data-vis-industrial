@@ -5,7 +5,15 @@ st.title('⚡SECOM Industrial Dataset Visualization')
 
 st.write('This app allows you to explore the SECOM dataset')
 
-df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
-df
+with st.expander('Data'):
+  st.write('**Raw Data**')
+  df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
+  df
 
-df.info()
+  st.write('**X**')
+  X = df.drop('labels', axis=1)
+  X
+
+  st.write('**y**')
+  y = df.Labels
+  y
