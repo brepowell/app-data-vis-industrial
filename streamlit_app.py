@@ -17,3 +17,7 @@ with st.expander('Data'):
   st.write('**y**')
   y = df.Label
   y
+
+
+with st.expander('Data Visualization'):
+  st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
