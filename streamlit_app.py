@@ -11,9 +11,9 @@ with st.expander('Data'):
   df
 
   st.write('**X**')
-  X = df.drop('Labels', axis=1)
+  X = df.drop('Label', axis=1)
   X
 
   st.write('**y**')
-  y = df.Labels
+  y = df.Label
   y
