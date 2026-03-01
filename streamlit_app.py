@@ -22,18 +22,20 @@ with st.expander('Data'):
 
 st.write('## Data Exploration') 
 
+num_total = df.shape[1]
+st.write(f"- Total Features: {num_total}")
+
 ##########################
 # ZERO-VARIANCE FEATURES #
 ##########################
 
-st.write("### Zero-Variance Features Report:")
+st.write("### Zero-Variance Features:")
 st.write("These are features that do not change in the dataset. They are not useful in determining the whether the manufacturing passes or fails.")
 constant_cols = [col for col in df.columns if df[col].nunique() <= 1]
-num_total = df.shape[1]
 num_constant = len(constant_cols)
 percent_useless = (num_constant / num_total) * 100
 
-st.write(f"- Total Features: {num_total}")
+
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
   
 df_clean = df.drop(columns=constant_cols)
@@ -44,8 +46,8 @@ df_clean = df.drop(columns=constant_cols)
 st.write("### Data Missingness Report:")
 st.write("Data that is missing from pass or fail states might be important features, so I do not want to delete them before exploring to see if they are important.")
 st.write("In the table below, I look at the percent of missing values in the Passes vs. the Fails to see whether or not the features are important to judging the fails.")
-st.write("Low Difference_% means the data is safe to drop because the data is missing across both Passes and Fails.")
-st.write("High Difference_% means the data may be important.")
+st.write("- Low Difference_% means the data is safe to drop because the data is missing across both Passes and Fails.")
+st.write("- High Difference_% means the data may be important.")
 
 # Calculate missingness globally and group by label
 missing_pct = df.isnull().mean() * 100
@@ -62,7 +64,9 @@ comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - compariso
 
 # Sort and display
 comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
-comparison_df
+
+with st.expander('Missingness across Passes and Fails'):
+  comparison_df
 
 # Automatically identify "High Signal" columns (Difference > 5%)
 high_signal_cols = comparison_df[comparison_df['Difference_%'] > 5].index
