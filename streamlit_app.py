@@ -24,9 +24,8 @@ st.write('## Data Exploration')
 # ZERO-VARIANCE FEATURES #
 ##########################
 
-st.write(f"Data Integrity Report:")
-# Find columns where all values are the same
-
+st.write("### Zero-Variance Features Report:")
+st.write("These are features that do not change in the dataset. They are not useful in determining the whether the manufacturing passes or fails.")
 constant_cols = [col for col in df.columns if df[col].nunique() <= 1]
 num_total = df.shape[1]
 num_constant = len(constant_cols)
@@ -36,24 +35,23 @@ st.write(f"- Total Features: {num_total}")
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
   
 df_clean = df.drop(columns=constant_cols)
-st.write(f"Dropped {len(constant_cols)} constant features.")
 
 ###############
 # MISSINGNESS #
 ###############
-st.write("Data Missingness Report:")
-
+st.write("### Data Missingness Report:")
+st.write("Data that is missing from pass or fail states might be important features, so I do not want to delete them before exploring to see if they are important.")
 # 1. Calculate missingness globally and filter columns
 missing_pct = df.isnull().mean() * 100
 high_missing_cols = missing_pct[missing_pct > 50].index
 
 # 2. Group by Label and calculate missingness for those specific columns
-# We take the mean of the null check to get the percentage
+# Take the mean of the null check to get the percentage
 comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
 
 # 3. Rename columns and calculate the difference
 comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
-comparison_df['Difference'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
+comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
 
 # 4. Sort and display
 comparison_df = comparison_df.sort_values(by='Difference', ascending=False).round(2)
