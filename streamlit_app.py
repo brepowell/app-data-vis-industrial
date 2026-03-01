@@ -112,7 +112,7 @@ sns.barplot(x=fail_rate_by_day.index, y=fail_rate_by_day.values, order=day_order
 plt.title('Percentage of Failures by Day of the Week')
 plt.ylabel('Failure Rate (%)')
 plt.xlabel('Day')
-st.pyplot(fig)
+st.pyplot(plt)
 
 
 
