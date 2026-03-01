@@ -10,14 +10,8 @@ Exploring SECOM dataset.
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/app-starter-kit?quickstart=1)
 
-## Section Heading
-
-This is filler text, please replace this with text for this section.
-
 ## Further Reading
 
 Learn more:
 
 - Dataset source: https://archive.ics.uci.edu/dataset/179/secom
-- Resource 2
-- Resource 3
