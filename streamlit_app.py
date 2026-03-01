@@ -89,9 +89,6 @@ sns.heatmap(corr_matrix[['Label']].sort_values(by='Label', ascending=False),
 plt.title("Correlation: Missingness Indicators vs. Label")
 st.pyplot(plt)
 
-# Fill remaining NaNs with the median of their respective column
-df_clean = df_clean.fillna(df_clean.median())
-
 ###############
 # TIME SERIES #
 ###############
