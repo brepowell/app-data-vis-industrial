@@ -114,8 +114,17 @@ plt.ylabel('Failure Rate (%)')
 plt.xlabel('Day')
 st.pyplot(plt)
 
+# Extract hour
+df['Hour'] = df['Timestamp'].dt.hour
 
+# Create a pivot table for the heatmap
+heatmap_data = df.pivot_table(index='Day_of_Week', columns='Hour', values='is_fail', aggfunc='mean')
+heatmap_data = heatmap_data.reindex(day_order)
 
+plt.figure(figsize=(12, 6))
+sns.heatmap(heatmap_data, cmap='YlOrRd', annot=False)
+plt.title('Heatmap: Failure Probability by Hour and Day')
+st.pyplot(plt)
 
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
