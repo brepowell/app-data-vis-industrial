@@ -12,14 +12,6 @@ with st.expander('Data'):
   df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
   df
 
-  st.write('**X**')
-  X = df.drop('Label', axis=1)
-  X
-
-  st.write('**y**')
-  y = df.Label
-  y
-
 st.write('## Data Exploration') 
 
 num_total = df.shape[1]
@@ -34,7 +26,6 @@ st.write("These are features that do not change in the dataset. They are not use
 constant_cols = [col for col in df.columns if df[col].nunique() <= 1]
 num_constant = len(constant_cols)
 percent_useless = (num_constant / num_total) * 100
-
 
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
   
@@ -88,6 +79,7 @@ plot_data = df[['Label'] + indicator_cols]
 corr_matrix = plot_data.corr()
 
 # Plotting
+st.write("There does not seem to be a strong linear correlation between missingness and the label of Pass vs. Fail. There might be a nonlinear relationship not yet explored. ")
 plt.figure(figsize=(10, 8))
 sns.heatmap(corr_matrix[['Label']].sort_values(by='Label', ascending=False), 
             annot=True, 
@@ -97,8 +89,43 @@ sns.heatmap(corr_matrix[['Label']].sort_values(by='Label', ascending=False),
 plt.title("Correlation: Missingness Indicators vs. Label")
 st.pyplot(plt)
 
+# Fill remaining NaNs with the median of their respective column
+df_clean = df_clean.fillna(df_clean.median())
+
+###############
+# TIME SERIES #
+###############
+st.write("### Time-Relevant Features:")
+
+# Convert timestamp to actual datetime objects
+df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True)
+
+# Extract day of the week
+df['Day_of_Week'] = df['Timestamp'].dt.day_name()
+
+# Calculate failure rate per day
+# Mapping -1 to 0 and 1 to 1 makes calculating the 'mean' the same as 'failure rate'
+df['is_fail'] = df['Label'].map({-1: 0, 1: 1})
+day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+fail_rate_by_day = df.groupby('Day_of_Week')['is_fail'].mean() * 100
+
+# Plot
+plt.figure(figsize=(10, 6))
+sns.barplot(x=fail_rate_by_day.index, y=fail_rate_by_day.values, order=day_order, palette='viridis')
+plt.title('Percentage of Failures by Day of the Week')
+plt.ylabel('Failure Rate (%)')
+plt.xlabel('Day')
+plt.show()
+
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
 
+with st.expander('X and Y'):
+  st.write('**X**')
+  X = df_clean.drop('Label', axis=1)
+  X
 
+  st.write('**y**')
+  y = df_clean.Label
+  y
 
