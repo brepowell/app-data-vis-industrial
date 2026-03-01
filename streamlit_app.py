@@ -57,7 +57,7 @@ comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - compariso
 comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
 
 with st.expander('Missingness across Passes and Fails'):
-  st.write("There are 28 features that have over 50% missing values. Of those, some features, like 'Feature_72' and 'Feature_73', have a larger difference between passes and fails. That could be significant.
+  st.write("There are 28 features that have over 50% missing values. Of those, some features, like Feature_72 and Feature_73, have a larger difference between passes and fails. That could be significant.
   comparison_df
 
 # Automatically identify "High Signal" columns (Difference > 5%)
