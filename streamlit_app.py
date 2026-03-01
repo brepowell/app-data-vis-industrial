@@ -100,7 +100,7 @@ df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True)
 # Extract day of the week
 df['Day_of_Week'] = df['Timestamp'].dt.day_name()
 
-with st.expander('Failure Rate per day'):
+with st.expander('Failure Rate Per Day'):
   # Calculate failure rate per day
   # Mapping -1 to 0 and 1 to 1 makes calculating the 'mean' the same as 'failure rate'
   df['is_fail'] = df['Label'].map({-1: 0, 1: 1})
@@ -115,7 +115,9 @@ with st.expander('Failure Rate per day'):
   plt.xlabel('Day')
   st.pyplot(plt)
 
-with st.expander('Days vs. Hours - Probability of failure'):
+with st.expander('Days vs. Hours - Probability of Failure'):
+
+  st.write("There may be a trend at the beginning of shifts at 8AM.")
   # Extract hour
   df['Hour'] = df['Timestamp'].dt.hour
   
@@ -128,20 +130,36 @@ with st.expander('Days vs. Hours - Probability of failure'):
   plt.title('Heatmap: Failure Probability by Hour and Day')
   st.pyplot(plt)
 
-with st.expander('Data Visualization'):
+with st.expander('Rolling Failure Rate - Peaks of Failure Over Time'):
   # Sort by time
   df = df.sort_values('Timestamp')
   
   # Calculate a rolling failure rate (e.g., over the last 50 units processed)
   df['Rolling_Fail_Rate'] = df['is_fail'].rolling(window=50).mean() * 100
-  
+
+  # Calculate the overall mean and standard deviation of the rolling rate
+  avg_rate = df['Rolling_Fail_Rate'].mean()
+  std_rate = df['Rolling_Fail_Rate'].std()
+
+  # Plot
   plt.figure(figsize=(14, 6))
   plt.plot(df['Timestamp'], df['Rolling_Fail_Rate'], color='red', linewidth=1)
   plt.fill_between(df['Timestamp'], df['Rolling_Fail_Rate'], color='red', alpha=0.1)
   plt.title('50-Unit Rolling Failure Rate Over Time')
   plt.ylabel('Failure Rate (%)')
   plt.xlabel('Date')
+
+  # Add 'Control Limits' to the plot
+  plt.axhline(y=avg_rate, color='green', linestyle='--', label='Average')
+  plt.axhline(y=avg_rate + (2 * std_rate), color='orange', linestyle='--', label='Warning Limit')
+  plt.axhline(y=avg_rate + (3 * std_rate), color='red', linestyle='--', label='Action Limit')
+  plt.legend()
+  
   st.pyplot(plt)
+
+
+  
+
 
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
