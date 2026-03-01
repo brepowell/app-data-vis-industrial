@@ -1,13 +1,10 @@
-# 📦 Streamlit App Starter Kit 
-```
-⬆️ (Replace above with your app's name)
-```
+# Data Visualization of Industrial Dataset
 
-Description of the app ...
+Exploring SECOM dataset.
 
 ## Demo App
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://app-starter-kit.streamlit.app/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://breanna-powell-app-data-vis-industrial.streamlit.app/)
 
 ## GitHub Codespaces
 
