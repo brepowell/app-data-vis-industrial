@@ -43,15 +43,11 @@ df = df.drop(columns=constant_cols, inplace=True)
 ###############
 st.write("### Data Missingness Report:")
 
-# Filter out columns that have 0 nulls to keep the chart clean
+# Calculate the null values
 null_counts = df.isnull().sum().sort_values(ascending=False)
-null_counts = null_counts[null_counts > 0]
 
-st.write("### Missing Values Chart")
-if not null_counts.empty:
-    st.bar_chart(null_counts)
-else:
-    st.success("No missing values found! 🎉")
+st.write("### Missing Values per Column")
+st.table(null_counts)
 
 # Group by Label and calculate missingness for those specific columns
 # Take the mean of the null check to get the percentage
