@@ -12,6 +12,9 @@ with st.expander('Data'):
   df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
   df
 
+  st.write('**Raw Data Describe**')
+  df.describe()
+
 st.write('## Data Exploration') 
 
 num_total = df.shape[1]
@@ -204,6 +207,7 @@ for sensor, shift_val in top_5_sensors.items():
     direction = "HIGHER" if shifts[sensor] > 0 else "LOWER"
     st.write(f"{sensor}: Shifted {abs(shift_val):.2f} standard deviations {direction} than normal.")
 
+df.isnull().sum().sort_values(ascending=False)
 
 from sklearn.ensemble import RandomForestClassifier
 
@@ -223,7 +227,21 @@ indicator_importance = importances[importances.index.str.contains('_is_missing')
 st.write("### Feature Importance of Missingness Indicators")
 st.bar_chart(indicator_importance)
 
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Apply PCA and start by looking at 95% of the variance
+pca = PCA(n_components=0.95)
+X_pca = pca.fit_transform(X_scaled)
+
+# Report Results
+n_components = pca.n_components_
+st.write(f"Original features: {X.shape[1]}")
+st.write(f"Reduced to {n_components} components while keeping 95% of variance.")
 
 
 #################
