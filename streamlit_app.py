@@ -239,12 +239,38 @@ st.write("### Other Features:")
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
 
-with st.expander('X and Y'):
-  st.write('**X**')
-  X = df.drop('Label', axis=1)
-  X
 
-  st.write('**y**')
-  y = df.Label
-  y
+from sklearn.ensemble import RandomForestClassifier
+
+# Prepare data: Drop the target and handle any remaining NaNs in original features 
+# (Simple mean imputation just for the importance test)
+X = df.drop(columns=['Label']).fillna(df.mean())
+y = df['Label']
+
+# Train a quick Random Forest
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X, y)
+
+# Get importance and filter for your new indicator columns
+importances = pd.Series(rf.feature_importances_, index=X.columns)
+indicator_importance = importances[importances.index.str.contains('_is_missing')].sort_values(ascending=False)
+
+st.write("### Feature Importance of Missingness Indicators")
+st.bar_chart(indicator_importance)
+
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Apply PCA and start by looking at 95% of the variance
+pca = PCA(n_components=0.95)
+X_pca = pca.fit_transform(X_scaled)
+
+# Report Results
+n_components = pca.n_components_
+st.write(f"Original features: {X.shape[1]}")
+st.write(f"Reduced to {n_components} components while keeping 95% of variance.")
 
