@@ -140,19 +140,19 @@ with st.expander('Sensor Logs Per Day'):
     # Group by day and count the number of rows
     logs_per_day = df.groupby(df['Timestamp'].dt.date).size()
 
-    # Plotting
+    # Plot line chart
     plt.figure(figsize=(12, 5))
-    logs_per_day.plot(kind='bar', color='skyblue')
+    plt.plot(logs_per_day.index, logs_per_day.values, color='skyblue', linewidth=2)
+    plt.fill_between(logs_per_day.index, logs_per_day.values, color='skyblue', alpha=0.3)
     plt.title("Number of Sensor Logs Per Day")
-    plt.xlabel("Date")
-    plt.ylabel("Log Count")
-    plt.xticks(rotation=45)
     st.pyplot(plt)
 
     # Check for consistency
     mean_logs = logs_per_day.mean()
     std_logs = logs_per_day.std()
     st.write(f"Average logs per day: {mean_logs:.2f} (±{std_logs:.2f})")
+
+
 
 with st.expander('Failure Rate Per Day'):
 
