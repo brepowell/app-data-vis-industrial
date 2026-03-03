@@ -52,6 +52,10 @@ with st.expander('All Missingness'):
 
 with st.expander('Missingness across Passes and Fails'):
 
+  # Identify columns with more than 50% missing values
+  null_percent = df.isnull().mean()
+  high_missing_cols = null_percent[null_percent > 0.5].index.tolist()
+  
   # Group by Label and calculate missingness for those specific columns
   # Take the mean of the null check to get the percentage
   comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
