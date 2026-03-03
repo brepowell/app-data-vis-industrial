@@ -43,24 +43,26 @@ df = df.drop(columns=constant_cols, inplace=True)
 ###############
 st.write("### Data Missingness Report:")
 
-# Calculate the null values
-null_counts = df.isnull().sum().sort_values(ascending=False)
-
-st.write("### Missing Values per Column")
-st.table(null_counts)
-
-# Group by Label and calculate missingness for those specific columns
-# Take the mean of the null check to get the percentage
-comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
-
-# Rename columns and calculate the difference
-comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
-comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
-
-# Sort and display
-comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
+with st.expander('All Missingness'):
+  # Calculate the null values
+  null_counts = df.isnull().sum().sort_values(ascending=False)
+  
+  st.write("### Missing Values per Column")
+  st.table(null_counts)
 
 with st.expander('Missingness across Passes and Fails'):
+
+  # Group by Label and calculate missingness for those specific columns
+  # Take the mean of the null check to get the percentage
+  comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
+  
+  # Rename columns and calculate the difference
+  comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
+  comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
+  
+  # Sort and display
+  comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
+
   st.write("Data that is missing from pass or fail states might be important features because there may be a correlation between a sensor failing and a failed component, so I do not want to delete them before exploring to see if they are important.")
   st.write("In the table below, I look at the percent of missing values in the Passes vs. the Fails to see whether or not the features are important to judging the fails.")
   st.write("- Low Difference_% means the data is probably safe to drop because the data is missing across both Passes and Fails.")
