@@ -36,7 +36,7 @@ percent_useless = (num_constant / num_total) * 100
 
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
   
-df = df.drop(columns=constant_cols, inplace=True)
+df = df.drop(columns=constant_cols)
 
 ###############
 # MISSINGNESS #
