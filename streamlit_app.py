@@ -28,7 +28,7 @@ st.write(f"- Total Features: {num_total}")
 ###############
 # TIME SERIES #
 ###############
-st.write("### Time-Relevant Features:")
+st.write("### Raw Time Features:")
 
 # Convert timestamp to actual datetime objects
 df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True)
@@ -147,22 +147,6 @@ with st.expander('Rolling Failure + Logs per day'):
     # Display in Streamlit
     st.pyplot(fig)
 
-
-
-##########################
-# ZERO-VARIANCE FEATURES #
-##########################
-
-st.write("### Zero-Variance Features:")
-st.write("These are features that do not change in the dataset. They are not useful in determining the whether the manufacturing passes or fails.")
-constant_cols = [col for col in df.columns if df[col].nunique() <= 1]
-num_constant = len(constant_cols)
-percent_useless = (num_constant / num_total) * 100
-
-st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
-  
-df = df.drop(columns=constant_cols)
-
 ###############
 # MISSINGNESS #
 ###############
@@ -248,6 +232,45 @@ with st.expander('Missingness Indicator Columns'):
   
   plt.title("Correlation: Missingness Indicators vs. Label")
   st.pyplot(plt)
+
+
+#####################
+# RESAMPLE FEATURES #
+#####################
+
+df_indexed = df.set_index('Timestamp')
+
+# Define how to handle each column type
+# We want the AVERAGE sensor value, but the MAX failure/missing signal
+agg_rules = {}
+for col in df_indexed.columns:
+    if col == 'Label' or '_is_missing' in col:
+        agg_rules[col] = 'max'  # If 1 failure happened in 60 mins, the hour is a '1'
+    else:
+        agg_rules[col] = 'mean' # Average sensor readings to remove jitter
+
+# Create the Hourly Dataframe
+df_hourly = df_indexed.resample('1H').agg(agg_rules)
+
+# Cleanup: Remove hours where the machine was completely off (no Label)
+df_hourly = df_hourly.dropna(subset=['Label'])
+
+st.write(f"Resampling complete. Reduced from {len(df)} logs to {len(df_hourly)} hours.")
+
+##########################
+# ZERO-VARIANCE FEATURES #
+##########################
+
+st.write("### Zero-Variance Features:")
+st.write("These are features that do not change in the dataset. They are not useful in determining the whether the manufacturing passes or fails.")
+constant_cols = [col for col in df.columns if df[col].nunique() <= 1]
+num_constant = len(constant_cols)
+percent_useless = (num_constant / num_total) * 100
+
+st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
+  
+df = df.drop(columns=constant_cols)
+
 
 
 #################
