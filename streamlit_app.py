@@ -243,7 +243,7 @@ from sklearn.ensemble import RandomForestClassifier
 df
 
 # Drop both Label and Timestamp/Time (using errors='ignore' in case names vary)
-columns_to_drop = ['Label', 'Timestamp']
+columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Day', 'Rolling_Fail_Rate']
 X = df.drop(columns=columns_to_drop, errors='ignore')
 
 # 2. Ensure we only have numeric data for the mean calculation and the model
