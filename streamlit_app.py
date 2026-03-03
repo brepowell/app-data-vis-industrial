@@ -347,7 +347,7 @@ st.write("### Feature Importance:")
 from sklearn.ensemble import RandomForestClassifier
 
 # Drop both Label and Timestamp/Time (using errors='ignore' in case names vary)
-columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Rolling_Fail_Rate']
+columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Rolling_Fail_Rate', 'is_fail']
 X = df_hourly.drop(columns=columns_to_drop, errors='ignore')
 
 # Ensure we only have numeric data for the mean calculation and the model
@@ -379,6 +379,7 @@ df_hourly = df_hourly.drop(columns=indicator_cols)
 
 st.write(f"Dropped {len(indicator_cols)} indicator columns. Remaining features: {df_hourly.shape[1]}")
 
+st.write("### Dimensionality Reduction with PCA")
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
@@ -400,8 +401,14 @@ X_pca = pca.fit_transform(X_scaled)
 
 # Report Results
 n_components = pca.n_components_
-st.write(f"Feature Count Before PCA: {X.shape[1]}")
+st.write(f"Numeric Feature Count Before PCA: {X.shape[1]}")
 st.write(f"Reduced to {n_components} components while keeping 95% of variance.")
+
+st.write("X")
+X
+
+st.write("X_pca")
+X_pca
 
 with st.expander('Interactive Data Visualization'):
     st.write("Select sensors to visualize how they relate to manufacturing failures.")
@@ -426,9 +433,3 @@ with st.expander('Interactive Data Visualization'):
         )
     else:
         st.warning("Not enough numeric features remaining after cleaning to create a scatter plot.")
-
-st.write("X")
-X
-
-st.write("X_pca")
-X_pca
