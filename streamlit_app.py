@@ -342,7 +342,7 @@ for sensor, shift_val in top_5_sensors.items():
     direction = "HIGHER" if shifts[sensor] > 0 else "LOWER"
     st.write(f"{sensor}: Shifted {abs(shift_val):.2f} standard deviations {direction} than normal.")
 
-st.write("### PCA and Dimensionality Reduction:")
+st.write("### Feature Importance:")
 
 from sklearn.ensemble import RandomForestClassifier
 
@@ -368,6 +368,16 @@ indicator_importance = importances[importances.index.str.contains('_is_missing')
 
 st.write("Feature Importance of Missingness Indicators")
 st.bar_chart(indicator_importance)
+
+st.write('The chart above concludes that the missingness indicators I added earlier do not help to improve predictions. Therefore, I will remove them from the dataset.')
+
+# Identify all columns with the missingness suffix
+indicator_cols = [col for col in df_hourly.columns if '_is_missing' in col]
+
+# Drop them from the dataframe
+df_hourly = df_hourly.drop(columns=indicator_cols)
+
+st.write(f"Dropped {len(indicator_cols)} indicator columns. Remaining features: {df_hourly.shape[1]}")
 
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
