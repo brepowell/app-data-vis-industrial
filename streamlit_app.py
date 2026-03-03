@@ -7,7 +7,7 @@ st.title('⚡SECOM Industrial Dataset Visualization')
 
 st.write('This app allows you to explore the SECOM dataset')
 
-with st.expander('Data'):
+with st.expander('Raw Data'):
     st.write('**Raw Data**')
     df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
     st.dataframe(df) # Displays the original data in an interactive table
@@ -376,3 +376,6 @@ with st.expander('Interactive Data Visualization'):
         )
     else:
         st.warning("Not enough numeric features remaining after cleaning to create a scatter plot.")
+
+
+df_hourly
