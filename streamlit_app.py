@@ -234,13 +234,9 @@ for sensor, shift_val in top_5_sensors.items():
     direction = "HIGHER" if shifts[sensor] > 0 else "LOWER"
     st.write(f"{sensor}: Shifted {abs(shift_val):.2f} standard deviations {direction} than normal.")
 
-st.write("### Other Features:")
-
-with st.expander('Data Visualization'):
-  st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
+st.write("### PCA and Dimensionality Reduction:")
 
 from sklearn.ensemble import RandomForestClassifier
-df
 
 # Drop both Label and Timestamp/Time (using errors='ignore' in case names vary)
 columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Day', 'Rolling_Fail_Rate']
@@ -281,3 +277,7 @@ n_components = pca.n_components_
 st.write(f"Original features: {X.shape[1]}")
 st.write(f"Reduced to {n_components} components while keeping 95% of variance.")
 
+df
+
+with st.expander('Data Visualization'):
+  st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
