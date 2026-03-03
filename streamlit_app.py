@@ -272,7 +272,8 @@ st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2
 df_hourly = df_hourly.drop(columns=constant_cols)
 
 with st.expander('Resampling Validation: Raw vs. Hourly Failure Heatmaps'):
-    
+    st.write("The comparison below shows that Saturday at 8am still has a high number of hours of failure compared to other ")
+
     # Prepare Data for both DataFrames
     day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -310,11 +311,10 @@ with st.expander('Resampling Validation: Raw vs. Hourly Failure Heatmaps'):
 st.write("### Anomaly Detection:")
 
 # Access the index since Timestamp isn't a column anymore
-df_hourly['Day'] = df_hourly.index.day_name()
 df_hourly['Hour'] = df_hourly.index.hour
 
 # Define "Spike" criteria: Wed/Sat at 8 AM
-is_spike = ((df_hourly['Day'] == 'Wednesday') | (df_hourly['Day'] == 'Saturday')) & (df_hourly['Hour'] == 8)
+is_spike = ((df_hourly['Day_of_Week'] == 'Wednesday') | (df_hourly['Day_of_Week'] == 'Saturday')) & (df_hourly['Hour'] == 8)
 
 # Split the data into "Spike Group" and "Normal Group"
 # We only look at features (excluding Timestamp, Label, and Time info)
@@ -347,7 +347,7 @@ st.write("### PCA and Dimensionality Reduction:")
 from sklearn.ensemble import RandomForestClassifier
 
 # Drop both Label and Timestamp/Time (using errors='ignore' in case names vary)
-columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Day', 'Rolling_Fail_Rate']
+columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Rolling_Fail_Rate']
 X = df_hourly.drop(columns=columns_to_drop, errors='ignore')
 
 # Ensure we only have numeric data for the mean calculation and the model
@@ -411,3 +411,5 @@ with st.expander('Interactive Data Visualization'):
 
 
 df_hourly
+
+X_pca
