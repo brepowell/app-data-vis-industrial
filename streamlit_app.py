@@ -36,12 +36,19 @@ percent_useless = (num_constant / num_total) * 100
 
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
   
-df = df.drop(columns=constant_cols)
+df = df.drop(columns=constant_cols, inplace=True)
 
 ###############
 # MISSINGNESS #
 ###############
 st.write("### Data Missingness Report:")
+
+total_nulls = df.isnull().sum().sum()
+top_missing_col = df.isnull().sum().idxmax()
+
+col1, col2 = st.columns(2)
+col1.metric("Total Missing Values", total_nulls)
+col2.metric("Top Missing Column", top_missing_col)
 
 # Calculate missingness globally and group by label
 missing_pct = df.isnull().mean() * 100
