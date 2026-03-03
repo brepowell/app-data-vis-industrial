@@ -252,7 +252,9 @@ for col in df_indexed.columns:
 df_hourly = df_indexed.resample('1H').agg(agg_rules)
 df_hourly = df_hourly.dropna(subset=['Label'])
 
-st.write(f"Resampling complete. Reduced from {len(df)} logs to {len(df_hourly)} hours.")
+st.write(f"Due to the fact that the number of logs per day is uneven, I resampled the data to just a mean per hour per sensor.")
+st.write(f"Reduced from {len(df)} logs to {len(df_hourly)} hours.")
+
 
 ##########################
 # ZERO-VARIANCE FEATURES #
@@ -351,5 +353,26 @@ n_components = pca.n_components_
 st.write(f"Feature Count Before PCA: {X.shape[1]}")
 st.write(f"Reduced to {n_components} components while keeping 95% of variance.")
 
-with st.expander('Data Visualization'):
-  st.scatter_chart(data=df_hourly, x='Feature_0', y='Feature_1', color="Label")
+with st.expander('Interactive Data Visualization'):
+    st.write("Select sensors to visualize how they relate to manufacturing failures.")
+    
+    # Only allow numeric sensor features for plotting
+    plot_options = [col for col in df_hourly.columns if 'Feature_' in col]
+    
+    if len(plot_options) >= 2:
+        col1, col2 = st.columns(2)
+        with col1:
+            x_axis = st.selectbox('Select X-axis sensor:', plot_options, index=0)
+        with col2:
+            y_axis = st.selectbox('Select Y-axis sensor:', plot_options, index=1)
+        
+        # Streamlit's native scatter chart
+        st.scatter_chart(
+            data=df_hourly, 
+            x=x_axis, 
+            y=y_axis, 
+            color="Label", 
+            use_container_width=True
+        )
+    else:
+        st.warning("Not enough numeric features remaining after cleaning to create a scatter plot.")
