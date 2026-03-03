@@ -115,6 +115,8 @@ with st.expander('Rolling Failure Rate - Peaks of Failure Over Time'):
 
     st.pyplot(plt)
 
+df = df.drop(columns=["is_fail"], errors='ignore')
+
 with st.expander('Rolling Failure + Logs per day'):
    
     # 3. Calculate Log Density (Logs per Day)
@@ -347,7 +349,7 @@ st.write("### Feature Importance:")
 from sklearn.ensemble import RandomForestClassifier
 
 # Drop both Label and Timestamp/Time (using errors='ignore' in case names vary)
-columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Rolling_Fail_Rate', 'is_fail']
+columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Rolling_Fail_Rate']
 X = df_hourly.drop(columns=columns_to_drop, errors='ignore')
 
 # Ensure we only have numeric data for the mean calculation and the model
@@ -403,6 +405,9 @@ X_pca = pca.fit_transform(X_scaled)
 n_components = pca.n_components_
 st.write(f"Numeric Feature Count Before PCA: {X.shape[1]}")
 st.write(f"Reduced to {n_components} components while keeping 95% of variance.")
+
+st.write("Cleaned Dataset")
+df_hourly
 
 st.write("X")
 X
