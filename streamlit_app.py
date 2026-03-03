@@ -41,31 +41,44 @@ df = df.drop(columns=constant_cols)
 ###############
 # MISSINGNESS #
 ###############
+
 st.write("### Data Missingness Report:")
 
+# Define high_missing_cols 
+null_percent = df.isnull().mean()
+high_missing_cols = null_percent[null_percent > 0.5].index.tolist()
+
 with st.expander('All Missingness'):
-  # Calculate the null values
-  null_counts = df.isnull().sum().sort_values(ascending=False)
-  
-  st.write("### Missing Values per Column")
-  st.table(null_counts)
+    null_counts = df.isnull().sum().sort_values(ascending=False)
+    st.table(null_counts)
 
 with st.expander('Missingness across Passes and Fails'):
+  
+    # Ensure high_missing_cols isn't empty to avoid errors
+    if high_missing_cols:
 
-  # Identify columns with more than 50% missing values
-  null_percent = df.isnull().mean()
-  high_missing_cols = null_percent[null_percent > 0.5].index.tolist()
-  
-  # Group by Label and calculate missingness for those specific columns
-  # Take the mean of the null check to get the percentage
-  comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
-  
-  # Rename columns and calculate the difference
-  comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
-  comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
-  
-  # Sort and display
-  comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
+        # Group by Label and calculate missingness for those specific columns
+        # Take the mean of the null check to get the percentage
+        comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
+        
+        # Rename columns and calculate the difference
+        comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
+        comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
+        
+        # Sort and display
+        comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
+
+        # Define high_signal_cols
+        high_signal_cols = comparison_df[comparison_df['Difference_%'] > 5].index
+
+        # Create new indicator columns and then drop original high-missing columns
+        for col in high_signal_cols:
+            df[f'{col}_is_missing'] = df[col].isnull().astype(int)
+        
+        # Drop ALL columns with > 50% missingness
+        df = df.drop(columns=high_missing_cols)
+    else:
+        st.write("No columns found with >50% missing values.")
 
   st.write("Data that is missing from pass or fail states might be important features because there may be a correlation between a sensor failing and a failed component, so I do not want to delete them before exploring to see if they are important.")
   st.write("In the table below, I look at the percent of missing values in the Passes vs. the Fails to see whether or not the features are important to judging the fails.")
@@ -75,16 +88,6 @@ with st.expander('Missingness across Passes and Fails'):
   
   st.write("There are 28 features that have over 50 percent missing values. Of those, some features, like Feature_72 and Feature_73, have a larger difference between passes and fails. That could be significant.")
   comparison_df
-
-# Automatically identify "High Signal" columns (Difference > 5%)
-high_signal_cols = comparison_df[comparison_df['Difference_%'] > 5].index
-
-# Create new indicator columns and then drop original high-missing columns
-for col in high_signal_cols:
-    df[f'{col}_is_missing'] = df[col].isnull().astype(int)
-
-# Drop ALL columns with > 50% missingness
-df = df.drop(columns=high_missing_cols)
 
 with st.expander('Missingness Indicator Columns'):
   st.write("I will make some Shadow Variables to see if the missing data is significant to predicting failures.")
@@ -218,6 +221,8 @@ st.write("--- Top 5 Sensors Experiencing Anomalies during Wed/Sat 8 AM Spikes --
 for sensor, shift_val in top_5_sensors.items():
     direction = "HIGHER" if shifts[sensor] > 0 else "LOWER"
     st.write(f"{sensor}: Shifted {abs(shift_val):.2f} standard deviations {direction} than normal.")
+
+
 
 # from sklearn.ensemble import RandomForestClassifier
 
