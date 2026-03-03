@@ -255,7 +255,6 @@ df_hourly = df_hourly.dropna(subset=['Label'])
 st.write(f"Due to the fact that the number of logs per day is uneven, I resampled the data to just a mean per hour per sensor.")
 st.write(f"Reduced from {len(df)} logs to {len(df_hourly)} hours.")
 
-
 ##########################
 # ZERO-VARIANCE FEATURES #
 ##########################
@@ -271,6 +270,35 @@ percent_useless = (num_constant / num_total) * 100
 
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
 df_hourly = df_hourly.drop(columns=constant_cols)
+
+with st.expander('Resampling Validation: Raw vs. Hourly Failure Heatmaps'):
+    
+    # Prepare Data for both DataFrames
+    # Ensure Day_of_Week and Hour exist for both
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    
+    for d in [df, df_hourly]:
+        ts_source = d.index if isinstance(d.index, pd.DatetimeIndex) else d['Timestamp']
+        d['Day_of_Week'] = ts_source.day_name()
+        d['Hour'] = ts_source.hour
+
+    # Create the Figure
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
+
+    # --- Heatmap 1: Raw Data (Log-Density Probability) ---
+    raw_pivot = df.pivot_table(index='Day_of_Week', columns='Hour', values='Label', aggfunc='mean')
+    raw_pivot = raw_pivot.reindex(day_order)
+    sns.heatmap(raw_pivot, cmap='YlOrRd', ax=ax1, cbar_kws={'label': 'Fail Rate per Log'})
+    ax1.set_title('Raw Data: Failure Probability (Biased by Log Count)')
+
+    # --- Heatmap 2: Hourly Data (Time-Density Probability) ---
+    hourly_pivot = df_hourly.pivot_table(index='Day_of_Week', columns='Hour', values='Label', aggfunc='mean')
+    hourly_pivot = hourly_pivot.reindex(day_order)
+    sns.heatmap(hourly_pivot, cmap='YlOrRd', ax=ax2, cbar_kws={'label': 'Fail Rate per Hour'})
+    ax2.set_title('Hourly Resampled: Failure Probability (Equitable Time)')
+
+    plt.tight_layout()
+    st.pyplot(fig)
 
 #################
 # MORE FEATURES #
