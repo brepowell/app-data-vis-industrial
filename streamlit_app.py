@@ -382,6 +382,14 @@ st.write(f"Dropped {len(indicator_cols)} indicator columns. Remaining features: 
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+X = df_hourly.drop(columns=columns_to_drop, errors='ignore')
+
+# Ensure we only have numeric data for the mean calculation and the model
+X = X.select_dtypes(include=['number'])
+
+# Fill missing values with the mean of the numeric columns
+X = X.fillna(X.mean())
+
 # Standardize the data
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -419,7 +427,8 @@ with st.expander('Interactive Data Visualization'):
     else:
         st.warning("Not enough numeric features remaining after cleaning to create a scatter plot.")
 
+st.write("X")
+X
 
-df_hourly
-
+st.write("X_pca")
 X_pca
