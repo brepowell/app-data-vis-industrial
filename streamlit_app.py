@@ -203,7 +203,29 @@ st.write("--- Top 5 Sensors Experiencing Anomalies during Wed/Sat 8 AM Spikes --
 for sensor, shift_val in top_5_sensors.items():
     direction = "HIGHER" if shifts[sensor] > 0 else "LOWER"
     st.write(f"{sensor}: Shifted {abs(shift_val):.2f} standard deviations {direction} than normal.")
-  
+
+
+from sklearn.ensemble import RandomForestClassifier
+
+# Prepare data: Drop the target and handle any remaining NaNs in original features 
+# (Simple mean imputation just for the importance test)
+X = df.drop(columns=['Label']).fillna(df.mean())
+y = df['Label']
+
+# Train a quick Random Forest
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X, y)
+
+# Get importance and filter for your new indicator columns
+importances = pd.Series(rf.feature_importances_, index=X.columns)
+indicator_importance = importances[importances.index.str.contains('_is_missing')].sort_values(ascending=False)
+
+st.write("### Feature Importance of Missingness Indicators")
+st.bar_chart(indicator_importance)
+
+
+
+
 #################
 # MORE FEATURES #
 #################
