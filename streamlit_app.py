@@ -135,6 +135,25 @@ df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True)
 # Extract day of the week
 df['Day_of_Week'] = df['Timestamp'].dt.day_name()
 
+with st.expander('Sensor Logs Per Day'):
+   
+    # Group by day and count the number of rows
+    logs_per_day = df.groupby(df['Timestamp'].dt.date).size()
+
+    # Plotting
+    plt.figure(figsize=(12, 5))
+    logs_per_day.plot(kind='bar', color='skyblue')
+    plt.title("Number of Sensor Logs Per Day")
+    plt.xlabel("Date")
+    plt.ylabel("Log Count")
+    plt.xticks(rotation=45)
+    st.pyplot(plt)
+
+    # Check for consistency
+    mean_logs = logs_per_day.mean()
+    std_logs = logs_per_day.std()
+    st.write(f"Average logs per day: {mean_logs:.2f} (±{std_logs:.2f})")
+
 with st.expander('Failure Rate Per Day'):
 
   st.write("Sunday has a slightly higher rate of failure.")
@@ -242,10 +261,10 @@ from sklearn.ensemble import RandomForestClassifier
 columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Day', 'Rolling_Fail_Rate']
 X = df.drop(columns=columns_to_drop, errors='ignore')
 
-# 2. Ensure we only have numeric data for the mean calculation and the model
+# Ensure we only have numeric data for the mean calculation and the model
 X = X.select_dtypes(include=['number'])
 
-# 3. Fill missing values with the mean of the numeric columns
+# Fill missing values with the mean of the numeric columns
 X = X.fillna(X.mean())
 
 y = df['Label']
@@ -254,11 +273,11 @@ y = df['Label']
 rf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf.fit(X, y)
 
-# Get importance and filter for your new indicator columns
+# Get importance and filter for the indicator columns
 importances = pd.Series(rf.feature_importances_, index=X.columns)
 indicator_importance = importances[importances.index.str.contains('_is_missing')].sort_values(ascending=False)
 
-st.write("### Feature Importance of Missingness Indicators")
+st.write("Feature Importance of Missingness Indicators")
 st.bar_chart(indicator_importance)
 
 from sklearn.decomposition import PCA
@@ -274,10 +293,8 @@ X_pca = pca.fit_transform(X_scaled)
 
 # Report Results
 n_components = pca.n_components_
-st.write(f"Original features: {X.shape[1]}")
+st.write(f"Feature Count Before PCA: {X.shape[1]}")
 st.write(f"Reduced to {n_components} components while keeping 95% of variance.")
-
-df
 
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
