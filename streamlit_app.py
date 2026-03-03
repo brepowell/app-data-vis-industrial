@@ -215,8 +215,6 @@ for sensor, shift_val in top_5_sensors.items():
     direction = "HIGHER" if shifts[sensor] > 0 else "LOWER"
     st.write(f"{sensor}: Shifted {abs(shift_val):.2f} standard deviations {direction} than normal.")
 
-df.isnull().sum().sort_values(ascending=False)
-
 # from sklearn.ensemble import RandomForestClassifier
 
 # # Prepare data: Drop the target and handle any remaining NaNs in original features 
