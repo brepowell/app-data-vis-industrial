@@ -79,15 +79,14 @@ with st.expander('Missingness across Passes and Fails'):
         df = df.drop(columns=high_missing_cols)
     else:
         st.write("No columns found with >50% missing values.")
-
-  st.write("Data that is missing from pass or fail states might be important features because there may be a correlation between a sensor failing and a failed component, so I do not want to delete them before exploring to see if they are important.")
-  st.write("In the table below, I look at the percent of missing values in the Passes vs. the Fails to see whether or not the features are important to judging the fails.")
-  st.write("- Low Difference_% means the data is probably safe to drop because the data is missing across both Passes and Fails.")
-  st.write("- High Difference_% means the data may be important.")
-  st.write(f"- Number of features with >50% missing values: {len(high_missing_cols)}")
-  
-  st.write("There are 28 features that have over 50 percent missing values. Of those, some features, like Feature_72 and Feature_73, have a larger difference between passes and fails. That could be significant.")
-  comparison_df
+        
+    st.write("Data that is missing from pass or fail states might be important features because there may be a correlation between a sensor failing and a failed component, so I do not want to delete them before exploring to see if they are important.")
+    st.write("In the table below, I look at the percent of missing values in the Passes vs. the Fails to see whether or not the features are important to judging the fails.")
+    st.write("- Low Difference_% means the data is probably safe to drop because the data is missing across both Passes and Fails.")
+    st.write("- High Difference_% means the data may be important.")
+    st.write(f"- Number of features with >50% missing values: {len(high_missing_cols)}")
+    st.write("There are 28 features that have over 50 percent missing values. Of those, some features, like Feature_72 and Feature_73, have a larger difference between passes and fails. That could be significant.")
+    comparison_df
 
 with st.expander('Missingness Indicator Columns'):
   st.write("I will make some Shadow Variables to see if the missing data is significant to predicting failures.")
