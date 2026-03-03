@@ -274,13 +274,17 @@ df_hourly = df_hourly.drop(columns=constant_cols)
 with st.expander('Resampling Validation: Raw vs. Hourly Failure Heatmaps'):
     
     # Prepare Data for both DataFrames
-    # Ensure Day_of_Week and Hour exist for both
     day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    
-    for d in [df, df_hourly]:
-        ts_source = d.index if isinstance(d.index, pd.DatetimeIndex) else d['Timestamp']
-        d['Day_of_Week'] = ts_source.day_name()
-        d['Hour'] = ts_source.hour
+
+    # Process the raw DataFrame (Column-based)
+    if 'Day_of_Week' not in df.columns:
+        df['Day_of_Week'] = pd.to_datetime(df['Timestamp']).dt.day_name()
+        df['Hour'] = pd.to_datetime(df['Timestamp']).dt.hour
+
+    # Process the hourly DataFrame (Index-based)
+    # We use .index.day_name() because we set Timestamp as the index earlier
+    df_hourly['Day_of_Week'] = df_hourly.index.day_name()
+    df_hourly['Hour'] = df_hourly.index.hour
 
     # Create the Figure
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
