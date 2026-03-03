@@ -10,10 +10,14 @@ st.write('This app allows you to explore the SECOM dataset')
 with st.expander('Data'):
   st.write('**Raw Data**')
   df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
-  df
+  st.dataframe(df) # Displays the original data in an interactive table
 
-  st.write('**Raw Data Describe**')
-  df.describe()
+  # Calculate the descriptive statistics
+  df_description = df.describe()
+
+  # Display the descriptive statistics
+  st.write("Descriptive Statistics (df.describe())")
+  st.dataframe(df_description)
 
 st.write('## Data Exploration') 
 
