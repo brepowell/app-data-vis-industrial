@@ -8,21 +8,146 @@ st.title('⚡SECOM Industrial Dataset Visualization')
 st.write('This app allows you to explore the SECOM dataset')
 
 with st.expander('Data'):
-  st.write('**Raw Data**')
-  df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
-  st.dataframe(df) # Displays the original data in an interactive table
+    st.write('**Raw Data**')
+    df = pd.read_csv("https://raw.githubusercontent.com/brepowell/app-data-vis-industrial/refs/heads/master/secom_combined.csv")
+    st.dataframe(df) # Displays the original data in an interactive table
 
-  # Calculate the descriptive statistics
-  df_description = df.describe()
+    # Calculate the descriptive statistics
+    df_description = df.describe()
 
-  # Display the descriptive statistics
-  st.write("Descriptive Statistics (df.describe())")
-  st.dataframe(df_description)
+    # Display the descriptive statistics
+    st.write("Descriptive Statistics (df.describe())")
+    st.dataframe(df_description)
 
 st.write('## Data Exploration') 
 
 num_total = df.shape[1]
 st.write(f"- Total Features: {num_total}")
+
+
+###############
+# TIME SERIES #
+###############
+st.write("### Time-Relevant Features:")
+
+# Convert timestamp to actual datetime objects
+df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True)
+
+# Extract day of the week
+df['Day_of_Week'] = df['Timestamp'].dt.day_name()
+
+with st.expander('Sensor Logs Per Day'):
+   
+    st.write("This shows that the number of logs per day is not consistant over time. To even this out, I will flatten it out to one average reading per hour.")
+
+    # Group by day and count the number of rows
+    logs_per_day = df.groupby(df['Timestamp'].dt.date).size()
+
+    # Plot line chart
+    plt.figure(figsize=(12, 5))
+    plt.plot(logs_per_day.index, logs_per_day.values, color='skyblue', linewidth=2)
+    plt.fill_between(logs_per_day.index, logs_per_day.values, color='skyblue', alpha=0.3)
+    plt.title("Number of Sensor Logs Per Day")
+    st.pyplot(plt)
+
+    # Check for consistency
+    mean_logs = logs_per_day.mean()
+    std_logs = logs_per_day.std()
+    st.write(f"Average logs per day: {mean_logs:.2f} (±{std_logs:.2f})")
+
+with st.expander('Failure Rate Per Day'):
+
+    st.write("Sunday has a slightly higher rate of failure.")
+
+    # Calculate failure rate per day
+    # Mapping -1 to 0 and 1 to 1 makes calculating the 'mean' the same as 'failure rate'
+    df['is_fail'] = df['Label'].map({-1: 0, 1: 1})
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    fail_rate_by_day = df.groupby('Day_of_Week')['is_fail'].mean() * 100
+
+    # Plot
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=fail_rate_by_day.index, y=fail_rate_by_day.values, order=day_order, palette='viridis')
+    plt.title('Percentage of Failures by Day of the Week')
+    plt.ylabel('Failure Rate (%)')
+    plt.xlabel('Day')
+    st.pyplot(plt)
+
+with st.expander('Days vs. Hours - Probability of Failure'):
+
+    st.write("There may be a trend at the beginning of shifts at 8AM.")
+    # Extract hour
+    df['Hour'] = df['Timestamp'].dt.hour
+
+    # Create a pivot table for the heatmap
+    heatmap_data = df.pivot_table(index='Day_of_Week', columns='Hour', values='is_fail', aggfunc='mean')
+    heatmap_data = heatmap_data.reindex(day_order)
+
+    plt.figure(figsize=(12, 6))
+    sns.heatmap(heatmap_data, cmap='YlOrRd', annot=False)
+    plt.title('Heatmap: Failure Probability by Hour and Day')
+    st.pyplot(plt)
+
+with st.expander('Rolling Failure Rate - Peaks of Failure Over Time'):
+    # Sort by time
+    df = df.sort_values('Timestamp')
+
+    # Calculate a rolling failure rate (e.g., over the last 50 units processed)
+    df['Rolling_Fail_Rate'] = df['is_fail'].rolling(window=50).mean() * 100
+
+    # Calculate the overall mean and standard deviation of the rolling rate
+    avg_rate = df['Rolling_Fail_Rate'].mean()
+    std_rate = df['Rolling_Fail_Rate'].std()
+
+    # Plot
+    plt.figure(figsize=(14, 6))
+    plt.plot(df['Timestamp'], df['Rolling_Fail_Rate'], color='red', linewidth=1)
+    plt.fill_between(df['Timestamp'], df['Rolling_Fail_Rate'], color='red', alpha=0.1)
+    plt.title('50-Unit Rolling Failure Rate Over Time')
+    plt.ylabel('Failure Rate (%)')
+    plt.xlabel('Date')
+
+    # Add 'Control Limits' to the plot
+    plt.axhline(y=avg_rate, color='green', linestyle='--', label='Average')
+    plt.axhline(y=avg_rate + (2 * std_rate), color='orange', linestyle='--', label='Warning Limit')
+    plt.axhline(y=avg_rate + (3 * std_rate), color='red', linestyle='--', label='Action Limit')
+    plt.legend()
+
+    st.pyplot(plt)
+
+with st.expander('Rolling Failure + Logs per day'):
+   
+    # 3. Calculate Log Density (Logs per Day)
+    # We resample to 'D' (Day) and count the rows
+    log_density = df.resample('D', on='Timestamp').size()
+
+    # 4. Create the Dual-Axis Plot
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+
+    # --- Axis 1: Rolling Failure Rate (Red Line) ---
+    color_fail = '#e63946' # Soft Red
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Rolling Failure Rate (Window=100)', color=color_fail, fontweight='bold')
+    ax1.plot(df['Timestamp'], df['Rolling_Fail_Rate'], color=color_fail, linewidth=2, label='Failure Rate')
+    ax1.tick_params(axis='y', labelcolor=color_fail)
+    ax1.grid(True, alpha=0.3)
+
+    # --- Axis 2: Log Density (Blue Line) ---
+    ax2 = ax1.twinx() 
+    color_logs = '#457b9d' # Steel Blue
+    ax2.set_ylabel('Logs Per Day (Density)', color=color_logs, fontweight='bold')
+    # Note: log_density index is the date, values is the count
+    ax2.plot(log_density.index, log_density.values, color=color_logs, linewidth=2, linestyle='--', label='Log Count')
+    ax2.tick_params(axis='y', labelcolor=color_logs)
+
+    # 5. Final Formatting
+    plt.title("Comparison: Failure Rate vs. Data Collection Density", fontsize=14)
+    fig.tight_layout()
+
+    # Display in Streamlit
+    st.pyplot(fig)
+
+
 
 ##########################
 # ZERO-VARIANCE FEATURES #
@@ -124,96 +249,6 @@ with st.expander('Missingness Indicator Columns'):
   plt.title("Correlation: Missingness Indicators vs. Label")
   st.pyplot(plt)
 
-###############
-# TIME SERIES #
-###############
-st.write("### Time-Relevant Features:")
-
-# Convert timestamp to actual datetime objects
-df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True)
-
-# Extract day of the week
-df['Day_of_Week'] = df['Timestamp'].dt.day_name()
-
-with st.expander('Sensor Logs Per Day'):
-   
-    # Group by day and count the number of rows
-    logs_per_day = df.groupby(df['Timestamp'].dt.date).size()
-
-    # Plot line chart
-    plt.figure(figsize=(12, 5))
-    plt.plot(logs_per_day.index, logs_per_day.values, color='skyblue', linewidth=2)
-    plt.fill_between(logs_per_day.index, logs_per_day.values, color='skyblue', alpha=0.3)
-    plt.title("Number of Sensor Logs Per Day")
-    st.pyplot(plt)
-
-    # Check for consistency
-    mean_logs = logs_per_day.mean()
-    std_logs = logs_per_day.std()
-    st.write(f"Average logs per day: {mean_logs:.2f} (±{std_logs:.2f})")
-
-
-
-with st.expander('Failure Rate Per Day'):
-
-  st.write("Sunday has a slightly higher rate of failure.")
-  
-  # Calculate failure rate per day
-  # Mapping -1 to 0 and 1 to 1 makes calculating the 'mean' the same as 'failure rate'
-  df['is_fail'] = df['Label'].map({-1: 0, 1: 1})
-  day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  fail_rate_by_day = df.groupby('Day_of_Week')['is_fail'].mean() * 100
-  
-  # Plot
-  plt.figure(figsize=(10, 6))
-  sns.barplot(x=fail_rate_by_day.index, y=fail_rate_by_day.values, order=day_order, palette='viridis')
-  plt.title('Percentage of Failures by Day of the Week')
-  plt.ylabel('Failure Rate (%)')
-  plt.xlabel('Day')
-  st.pyplot(plt)
-
-
-with st.expander('Days vs. Hours - Probability of Failure'):
-
-  st.write("There may be a trend at the beginning of shifts at 8AM.")
-  # Extract hour
-  df['Hour'] = df['Timestamp'].dt.hour
-  
-  # Create a pivot table for the heatmap
-  heatmap_data = df.pivot_table(index='Day_of_Week', columns='Hour', values='is_fail', aggfunc='mean')
-  heatmap_data = heatmap_data.reindex(day_order)
-  
-  plt.figure(figsize=(12, 6))
-  sns.heatmap(heatmap_data, cmap='YlOrRd', annot=False)
-  plt.title('Heatmap: Failure Probability by Hour and Day')
-  st.pyplot(plt)
-
-with st.expander('Rolling Failure Rate - Peaks of Failure Over Time'):
-  # Sort by time
-  df = df.sort_values('Timestamp')
-  
-  # Calculate a rolling failure rate (e.g., over the last 50 units processed)
-  df['Rolling_Fail_Rate'] = df['is_fail'].rolling(window=50).mean() * 100
-
-  # Calculate the overall mean and standard deviation of the rolling rate
-  avg_rate = df['Rolling_Fail_Rate'].mean()
-  std_rate = df['Rolling_Fail_Rate'].std()
-
-  # Plot
-  plt.figure(figsize=(14, 6))
-  plt.plot(df['Timestamp'], df['Rolling_Fail_Rate'], color='red', linewidth=1)
-  plt.fill_between(df['Timestamp'], df['Rolling_Fail_Rate'], color='red', alpha=0.1)
-  plt.title('50-Unit Rolling Failure Rate Over Time')
-  plt.ylabel('Failure Rate (%)')
-  plt.xlabel('Date')
-
-  # Add 'Control Limits' to the plot
-  plt.axhline(y=avg_rate, color='green', linestyle='--', label='Average')
-  plt.axhline(y=avg_rate + (2 * std_rate), color='orange', linestyle='--', label='Warning Limit')
-  plt.axhline(y=avg_rate + (3 * std_rate), color='red', linestyle='--', label='Action Limit')
-  plt.legend()
-  
-  st.pyplot(plt)
 
 #################
 # MORE FEATURES #
