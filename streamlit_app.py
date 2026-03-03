@@ -29,7 +29,7 @@ percent_useless = (num_constant / num_total) * 100
 
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
   
-df_clean = df.drop(columns=constant_cols)
+df = df.drop(columns=constant_cols)
 
 ###############
 # MISSINGNESS #
@@ -237,10 +237,10 @@ with st.expander('Data Visualization'):
 
 with st.expander('X and Y'):
   st.write('**X**')
-  X = df_clean.drop('Label', axis=1)
+  X = df.drop('Label', axis=1)
   X
 
   st.write('**y**')
-  y = df_clean.Label
+  y = df.Label
   y
 
