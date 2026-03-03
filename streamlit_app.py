@@ -36,12 +36,12 @@ df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True)
 # Extract day of the week
 df['Day_of_Week'] = df['Timestamp'].dt.day_name()
 
+# Group by day and count the number of rows
+logs_per_day = df.groupby(df['Timestamp'].dt.date).size()
+
 with st.expander('Sensor Logs Per Day'):
    
     st.write("This shows that the number of logs per day is not consistant over time. To even this out, I will flatten it out to one average reading per hour.")
-
-    # Group by day and count the number of rows
-    logs_per_day = df.groupby(df['Timestamp'].dt.date).size()
 
     # Plot line chart
     plt.figure(figsize=(12, 5))
@@ -173,34 +173,33 @@ with st.expander('All Missingness'):
     st.write("**Missing Values per Column**")
     st.table(null_counts)
 
+# Ensure high_missing_cols isn't empty to avoid errors
+if high_missing_cols:
+
+    # Group by Label and calculate missingness for those specific columns
+    # Take the mean of the null check to get the percentage
+    comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
+    
+    # Rename columns and calculate the difference
+    comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
+    comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
+    
+    # Sort and display
+    comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
+
+    # Define high_signal_cols
+    high_signal_cols = comparison_df[comparison_df['Difference_%'] > 5].index
+
+    # Create new indicator columns and then drop original high-missing columns
+    for col in high_signal_cols:
+        df[f'{col}_is_missing'] = df[col].isnull().astype(int)
+    
+    # Drop ALL columns with > 50% missingness
+    df = df.drop(columns=high_missing_cols)
+else:
+    st.write("No columns found with >50% missing values.")
 
 with st.expander('Missingness across Passes and Fails'):
-  
-    # Ensure high_missing_cols isn't empty to avoid errors
-    if high_missing_cols:
-
-        # Group by Label and calculate missingness for those specific columns
-        # Take the mean of the null check to get the percentage
-        comparison_df = df[high_missing_cols].isnull().groupby(df['Label']).mean().T * 100
-        
-        # Rename columns and calculate the difference
-        comparison_df.columns = ['Missing_in_Passes_%', 'Missing_in_Fails_%']
-        comparison_df['Difference_%'] = (comparison_df['Missing_in_Fails_%'] - comparison_df['Missing_in_Passes_%']).abs()
-        
-        # Sort and display
-        comparison_df = comparison_df.sort_values(by='Difference_%', ascending=False).round(2)
-
-        # Define high_signal_cols
-        high_signal_cols = comparison_df[comparison_df['Difference_%'] > 5].index
-
-        # Create new indicator columns and then drop original high-missing columns
-        for col in high_signal_cols:
-            df[f'{col}_is_missing'] = df[col].isnull().astype(int)
-        
-        # Drop ALL columns with > 50% missingness
-        df = df.drop(columns=high_missing_cols)
-    else:
-        st.write("No columns found with >50% missing values.")
         
     st.write("Data that is missing from pass or fail states might be important features because there may be a correlation between a sensor failing and a failed component, so I do not want to delete them before exploring to see if they are important.")
     st.write("In the table below, I look at the percent of missing values in the Passes vs. the Fails to see whether or not the features are important to judging the fails.")
@@ -263,13 +262,13 @@ st.write(f"Resampling complete. Reduced from {len(df)} logs to {len(df_hourly)} 
 
 st.write("### Zero-Variance Features:")
 st.write("These are features that do not change in the dataset. They are not useful in determining the whether the manufacturing passes or fails.")
-constant_cols = [col for col in df.columns if df[col].nunique() <= 1]
+constant_cols = [col for col in df_hourly.columns if df_hourly[col].nunique() <= 1]
 num_constant = len(constant_cols)
 percent_useless = (num_constant / num_total) * 100
 
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
   
-df = df.drop(columns=constant_cols)
+df_hourly = df_hourly.drop(columns=constant_cols)
 
 
 
@@ -279,18 +278,18 @@ df = df.drop(columns=constant_cols)
 st.write("### Anomaly Detection:")
 
 # Setup Time Filters
-df['Day'] = df['Timestamp'].dt.day_name()
-df['Hour'] = df['Timestamp'].dt.hour
+df_hourly['Day'] = df_hourly['Timestamp'].dt.day_name()
+df_hourly['Hour'] = df_hourly['Timestamp'].dt.hour
 
 # Define our "Spike" criteria: Wed/Sat at 8 AM
-is_spike = ((df['Day'] == 'Wednesday') | (df['Day'] == 'Saturday')) & (df['Hour'] == 8)
+is_spike = ((df_hourly['Day'] == 'Wednesday') | (df_hourly['Day'] == 'Saturday')) & (df_hourly['Hour'] == 8)
 
 # Split the data into "Spike Group" and "Normal Group"
 # We only look at features (excluding Timestamp, Label, and Time info)
-features_only = [col for col in df.columns if 'Feature_' in col and '_is_missing' not in col]
+features_only = [col for col in df_hourly.columns if 'Feature_' in col and '_is_missing' not in col]
 
-spike_group = df[is_spike][features_only]
-normal_group = df[~is_spike][features_only]
+spike_group = df_hourly[is_spike][features_only]
+normal_group = df_hourly[~is_spike][features_only]
 
 # Calculate the "Z-Score" or Deviation
 # We want to see which features moved the most relative to their normal standard deviation
@@ -317,7 +316,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 # Drop both Label and Timestamp/Time (using errors='ignore' in case names vary)
 columns_to_drop = ['Label', 'Timestamp', 'Day_of_Week', 'Day', 'Rolling_Fail_Rate']
-X = df.drop(columns=columns_to_drop, errors='ignore')
+X = df_hourly.drop(columns=columns_to_drop, errors='ignore')
 
 # Ensure we only have numeric data for the mean calculation and the model
 X = X.select_dtypes(include=['number'])
@@ -325,7 +324,7 @@ X = X.select_dtypes(include=['number'])
 # Fill missing values with the mean of the numeric columns
 X = X.fillna(X.mean())
 
-y = df['Label']
+y = df_hourly['Label']
 
 # Train a quick Random Forest
 rf = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -355,4 +354,4 @@ st.write(f"Feature Count Before PCA: {X.shape[1]}")
 st.write(f"Reduced to {n_components} components while keeping 95% of variance.")
 
 with st.expander('Data Visualization'):
-  st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
+  st.scatter_chart(data=df_hourly, x='Feature_0', y='Feature_1', color="Label")
