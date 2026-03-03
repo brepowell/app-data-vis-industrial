@@ -49,8 +49,17 @@ null_percent = df.isnull().mean()
 high_missing_cols = null_percent[null_percent > 0.5].index.tolist()
 
 with st.expander('All Missingness'):
+
+    # Filter out columns that have 0 nulls to keep the chart clean
     null_counts = df.isnull().sum().sort_values(ascending=False)
-    st.table(null_counts)
+    null_counts = null_counts[null_counts > 0]
+
+    st.write("### Missing Values Chart")
+    if not null_counts.empty:
+        st.bar_chart(null_counts)
+    else:
+        st.success("No missing values found! 🎉")
+
 
 with st.expander('Missingness across Passes and Fails'):
   
