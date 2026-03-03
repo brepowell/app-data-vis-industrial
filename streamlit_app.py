@@ -50,12 +50,19 @@ high_missing_cols = null_percent[null_percent > 0.5].index.tolist()
 
 with st.expander('All Missingness'):
 
-    total_nulls = df.isnull().sum().sum()
-    top_missing_col = df.isnull().sum().idxmax()
+    # Calculate the null values
+    null_counts = df.isnull().sum()
+    total_nulls = null_counts.sum()
 
+    top_missing_col = df.isnull().sum().idxmax()
     col1, col2 = st.columns(2)
     col1.metric("Total Missing Values", total_nulls)
     col2.metric("Top Missing Column", top_missing_col)
+
+    null_counts = null_counts.sort_values(ascending=False)
+
+    st.write("**Missing Values per Column**")
+    st.table(null_counts)
 
 
 with st.expander('Missingness across Passes and Fails'):
