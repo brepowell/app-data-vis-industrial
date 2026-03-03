@@ -240,18 +240,16 @@ with st.expander('Missingness Indicator Columns'):
 df_indexed = df.set_index('Timestamp')
 
 # Define how to handle each column type
-# We want the AVERAGE sensor value, but the MAX failure/missing signal
 agg_rules = {}
 for col in df_indexed.columns:
     if col == 'Label' or '_is_missing' in col:
-        agg_rules[col] = 'max'  # If 1 failure happened in 60 mins, the hour is a '1'
-    else:
-        agg_rules[col] = 'mean' # Average sensor readings to remove jitter
+        agg_rules[col] = 'max'  # Keep the failure/missing signal
+    elif df_indexed[col].dtype in ['float64', 'int64']:
+        agg_rules[col] = 'mean' # Only average numeric sensor readings
+    # We ignore string columns like 'Day_of_Week' as they are recreated later
 
 # Create the Hourly Dataframe
 df_hourly = df_indexed.resample('1H').agg(agg_rules)
-
-# Cleanup: Remove hours where the machine was completely off (no Label)
 df_hourly = df_hourly.dropna(subset=['Label'])
 
 st.write(f"Resampling complete. Reduced from {len(df)} logs to {len(df_hourly)} hours.")
@@ -262,26 +260,26 @@ st.write(f"Resampling complete. Reduced from {len(df)} logs to {len(df_hourly)} 
 
 st.write("### Zero-Variance Features:")
 st.write("These are features that do not change in the dataset. They are not useful in determining the whether the manufacturing passes or fails.")
-constant_cols = [col for col in df_hourly.columns if df_hourly[col].nunique() <= 1]
+
+# Use only numeric columns for nunique check to be safe
+numeric_cols = df_hourly.select_dtypes(include=['number']).columns
+constant_cols = [col for col in numeric_cols if df_hourly[col].nunique() <= 1]
 num_constant = len(constant_cols)
 percent_useless = (num_constant / num_total) * 100
 
 st.write(f"- Zero-Variance Features to Drop: {num_constant} ({percent_useless:.2f}%)")
-  
 df_hourly = df_hourly.drop(columns=constant_cols)
-
-
 
 #################
 # MORE FEATURES #
 #################
 st.write("### Anomaly Detection:")
 
-# Setup Time Filters
-df_hourly['Day'] = df_hourly['Timestamp'].dt.day_name()
-df_hourly['Hour'] = df_hourly['Timestamp'].dt.hour
+# Access the index since Timestamp isn't a column anymore
+df_hourly['Day'] = df_hourly.index.day_name()
+df_hourly['Hour'] = df_hourly.index.hour
 
-# Define our "Spike" criteria: Wed/Sat at 8 AM
+# Define "Spike" criteria: Wed/Sat at 8 AM
 is_spike = ((df_hourly['Day'] == 'Wednesday') | (df_hourly['Day'] == 'Saturday')) & (df_hourly['Hour'] == 8)
 
 # Split the data into "Spike Group" and "Normal Group"
