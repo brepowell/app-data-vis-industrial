@@ -239,12 +239,19 @@ st.write("### Other Features:")
 with st.expander('Data Visualization'):
   st.scatter_chart(data=df, x='Feature_0', y='Feature_1', color="Label")
 
-
 from sklearn.ensemble import RandomForestClassifier
+df
 
-# Prepare data: Drop the target and handle any remaining NaNs in original features 
-# (Simple mean imputation just for the importance test)
-X = df.drop(columns=['Label']).fillna(df.mean())
+# Drop both Label and Timestamp/Time (using errors='ignore' in case names vary)
+columns_to_drop = ['Label', 'Timestamp']
+X = df.drop(columns=columns_to_drop, errors='ignore')
+
+# 2. Ensure we only have numeric data for the mean calculation and the model
+X = X.select_dtypes(include=['number'])
+
+# 3. Fill missing values with the mean of the numeric columns
+X = X.fillna(X.mean())
+
 y = df['Label']
 
 # Train a quick Random Forest
